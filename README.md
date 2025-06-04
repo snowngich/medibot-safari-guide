@@ -1,73 +1,56 @@
-# Welcome to your Lovable project
+# 🚑 MediBot Afrika – AI-Powered Rural Healthcare Assistant
 
-## Project info
+**MediBot Afrika** is an intelligent digital assistant designed to support **Community Health Workers (CHWs)** and underserved populations in **remote areas of Kenya and across Africa**. It bridges the healthcare gap through AI-powered **symptom assessment**, **triage**, **outbreak detection**, and **educational support**, accessible via web, mobile, and USSD.
 
-**URL**: https://lovable.dev/projects/a3b5c136-daf5-4abd-a721-3987f8306d7e
+---
 
-## How can I edit this code?
+## 🌍 Mission
 
-There are several ways of editing your application.
+> To empower frontline health workers and communities with real-time, accurate, and location-aware medical support using artificial intelligence — especially in regions with limited access to doctors and health infrastructure.
 
-**Use Lovable**
+---
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/a3b5c136-daf5-4abd-a721-3987f8306d7e) and start prompting.
+## 🚀 Features
 
-Changes made via Lovable will be committed automatically to this repo.
+### ✅ Symptom Checker (AI-Powered)
+- Multi-condition assessment
+- Context-aware recommendations
+- Suggests next steps (self-care, hospital referral, urgency level)
 
-**Use your preferred IDE**
+### 📍 Location-Aware Diagnosis
+- Uses user’s county/sub-county (e.g., Turkana, Kitui, Tana River)
+- Adjusts predictions based on region-specific disease patterns
 
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
+### 🧠 Learning from CHWs
+- CHWs can confirm, correct, or provide feedback on diagnoses
+- System continuously improves via real-world inputs
 
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
+### 📊 Outbreak Detection
+- Monitors symptoms geographically
+- Flags suspicious clusters (e.g., cholera outbreak in Kilifi)
 
-Follow these steps:
+### 📚 Education Hub
+- First aid tutorials
+- Health literacy cards (malaria, maternal health, hygiene, etc.)
+- Multi-language support (English, Kiswahili)
 
-```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
+---
 
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
+## 🧰 Tech Stack
 
-# Step 3: Install the necessary dependencies.
-npm i
+| Layer              | Tools / Libraries                          |
+|-------------------|---------------------------------------------|
+| Frontend           | React.js, Tailwind CSS                     |
+| Backend / API      | Supabase (PostgreSQL), Node.js or Python   |
+| AI Logic           | Python (symptom-matching, ML models)       |
+| Maps (optional)    | Leaflet.js, Mapbox                         |
+| Deployment         | Vercel / Netlify / Railway / Render        |
 
-# Step 4: Start the development server with auto-reloading and an instant preview.
-npm run dev
-```
+---
 
-**Edit a file directly in GitHub**
+## 📦 Installation
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
-
-**Use GitHub Codespaces**
-
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
-
-## What technologies are used for this project?
-
-This project is built with:
-
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
-
-## How can I deploy this project?
-
-Simply open [Lovable](https://lovable.dev/projects/a3b5c136-daf5-4abd-a721-3987f8306d7e) and click on Share -> Publish.
-
-## Can I connect a custom domain to my Lovable project?
-
-Yes, you can!
-
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
-
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/tips-tricks/custom-domain#step-by-step-guide)
+### 1. Clone the Repository
+```bash
+git clone https://github.com/your-username/medibot-afrika.git
+cd medibot-afrika
