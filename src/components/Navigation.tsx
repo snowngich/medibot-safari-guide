@@ -13,7 +13,8 @@ import {
   LogOut,
   Heart,
   Menu,
-  X
+  X,
+  BookOpen
 } from 'lucide-react';
 
 const Navigation = () => {
@@ -31,6 +32,7 @@ const Navigation = () => {
     { icon: Search, label: 'Symptoms', path: '/symptom-checker' },
     { icon: Users, label: 'Patients', path: '/patients' },
     { icon: ArrowUpRight, label: 'Referrals', path: '/referrals' },
+    { icon: BookOpen, label: 'Education', path: '/education' },
     { icon: AlertTriangle, label: 'Emergency', path: '/emergency' }
   ];
 
@@ -169,7 +171,7 @@ const Navigation = () => {
 
       {/* Mobile Bottom Navigation */}
       <div className="lg:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 z-50">
-        <div className="grid grid-cols-5 h-16">
+        <div className="grid grid-cols-6 h-16">
           {navItems.map((item) => {
             const Icon = item.icon;
             return (
@@ -180,7 +182,7 @@ const Navigation = () => {
                   isActive(item.path) ? 'text-red-600' : 'text-gray-400'
                 }`}
               >
-                <Icon className="h-5 w-5" />
+                <Icon className="h-4 w-4" />
                 <span className="text-xs">{item.label}</span>
               </button>
             );

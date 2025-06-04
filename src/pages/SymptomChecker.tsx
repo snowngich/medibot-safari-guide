@@ -1,10 +1,12 @@
-
 import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import Navigation from '@/components/Navigation';
 import LocationSelector from '@/components/LocationSelector';
 import { 
@@ -17,35 +19,56 @@ import {
   Save,
   ArrowRight,
   TrendingUp,
-  Shield
+  Shield,
+  User,
+  ThumbsUp,
+  ThumbsDown,
+  Flag
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { diagnosisEngine } from '@/data/kenyanDiseases';
+import { enhancedDiagnosisEngine, type PatientProfile, type RiskFlag } from '@/data/kenyanDiseases';
 
 const SymptomChecker = () => {
   const [symptoms, setSymptoms] = useState('');
   const [selectedCounty, setSelectedCounty] = useState('');
   const [selectedSubCounty, setSelectedSubCounty] = useState('');
+  const [patientAge, setPatientAge] = useState('');
+  const [patientGender, setPatientGender] = useState<'male' | 'female'>('male');
+  const [medicalHistory, setMedicalHistory] = useState('');
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [analysis, setAnalysis] = useState<any>(null);
   const [feedbackSubmitted, setFeedbackSubmitted] = useState(false);
   const navigate = useNavigate();
 
   const handleAnalyze = async () => {
-    if (!symptoms.trim()) return;
+    if (!symptoms.trim() || !patientAge) return;
     
     setIsAnalyzing(true);
     
-    // Enhanced AI analysis with Kenyan disease context
+    // Enhanced AI analysis with patient profile and contextual factors
     setTimeout(() => {
       const symptomsList = symptoms.toLowerCase().split(/[,.\s]+/).filter(s => s.length > 2);
-      const analysisResult = diagnosisEngine.analyzeSymptoms(symptomsList, selectedCounty);
+      
+      const patientProfile: PatientProfile = {
+        age: parseInt(patientAge),
+        gender: patientGender,
+        location: selectedCounty,
+        medicalHistory: medicalHistory ? medicalHistory.split(',').map(h => h.trim()) : []
+      };
+      
+      const analysisResult = enhancedDiagnosisEngine.analyzeSymptoms(
+        symptomsList, 
+        patientProfile,
+        selectedCounty,
+        true
+      );
       
       setAnalysis({
         ...analysisResult,
         symptoms: symptoms,
         timestamp: new Date().toISOString(),
-        location: selectedCounty || 'Unknown'
+        location: selectedCounty || 'Unknown',
+        diagnosisId: `diag_${Date.now()}`
       });
       setIsAnalyzing(false);
     }, 2000);
@@ -61,15 +84,27 @@ const SymptomChecker = () => {
     }
   };
 
-  const saveToPatientLog = () => {
-    // In real app, this would save to database and contribute to learning
-    console.log('Saving analysis for learning:', analysis);
-    alert('Analysis saved to patient log and contributed to AI learning!');
+  const getRiskFlagColor = (severity: string) => {
+    switch (severity) {
+      case 'high': return 'bg-red-50 border-red-200 text-red-800';
+      case 'medium': return 'bg-orange-50 border-orange-200 text-orange-800';
+      case 'low': return 'bg-yellow-50 border-yellow-200 text-yellow-800';
+      default: return 'bg-gray-50 border-gray-200 text-gray-800';
+    }
   };
 
-  const submitFeedback = (isCorrect: boolean) => {
-    // This would feed back into the AI learning system
-    console.log('Feedback submitted:', { isCorrect, analysis });
+  const submitFeedback = (isCorrect: boolean, actualDiagnosis?: string, comments?: string) => {
+    if (!analysis) return;
+    
+    enhancedDiagnosisEngine.submitFeedback({
+      diagnosisId: analysis.diagnosisId,
+      chwId: 'current-user', // In real app, get from auth
+      isCorrect,
+      actualDiagnosis,
+      comments,
+      location: selectedCounty
+    });
+    
     setFeedbackSubmitted(true);
   };
 
@@ -81,11 +116,59 @@ const SymptomChecker = () => {
         <div className="max-w-2xl mx-auto">
           {/* Header */}
           <div className="mb-6">
-            <h1 className="text-2xl font-bold text-gray-900 mb-2">AI Symptom Checker</h1>
+            <h1 className="text-2xl font-bold text-gray-900 mb-2">Enhanced AI Symptom Checker</h1>
             <p className="text-gray-600">
-              AI-powered diagnostic assistance trained on Kenyan disease patterns
+              Context-aware diagnostic assistance with learning capabilities
             </p>
           </div>
+
+          {/* Patient Profile */}
+          <Card className="mb-6 border-0 shadow-sm">
+            <CardHeader>
+              <CardTitle className="flex items-center space-x-2">
+                <User className="h-5 w-5 text-red-600" />
+                <span>Patient Profile</span>
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <Label htmlFor="age">Age (years)</Label>
+                  <Input
+                    id="age"
+                    type="number"
+                    value={patientAge}
+                    onChange={(e) => setPatientAge(e.target.value)}
+                    placeholder="Enter patient age"
+                    className="border-gray-300 focus:border-red-500 focus:ring-red-500"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="gender">Gender</Label>
+                  <Select value={patientGender} onValueChange={(value: 'male' | 'female') => setPatientGender(value)}>
+                    <SelectTrigger className="border-gray-300 focus:border-red-500 focus:ring-red-500">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="male">Male</SelectItem>
+                      <SelectItem value="female">Female</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+              
+              <div>
+                <Label htmlFor="history">Medical History (optional)</Label>
+                <Input
+                  id="history"
+                  value={medicalHistory}
+                  onChange={(e) => setMedicalHistory(e.target.value)}
+                  placeholder="Previous illnesses, allergies, medications..."
+                  className="border-gray-300 focus:border-red-500 focus:ring-red-500"
+                />
+              </div>
+            </CardContent>
+          </Card>
 
           {/* Location Context */}
           <LocationSelector
@@ -96,17 +179,17 @@ const SymptomChecker = () => {
             className="mb-6"
           />
 
-          {/* Input Section */}
+          {/* Symptoms Input */}
           <Card className="mb-6 border-0 shadow-sm">
             <CardHeader>
               <CardTitle className="flex items-center space-x-2">
                 <Brain className="h-5 w-5 text-red-600" />
-                <span>Patient Symptoms</span>
+                <span>Symptoms & Clinical Presentation</span>
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               <Textarea
-                placeholder="Describe the patient's symptoms in detail... e.g., 'Patient presents with fever (39°C), severe headache, chills, and body aches for 3 days. Lives in rural area near stagnant water.'"
+                placeholder="Describe symptoms in detail, including duration, severity, and context... e.g., 'Child presents with high fever (39°C) for 2 days, vomiting, refuses to eat, lives near stagnant water'"
                 value={symptoms}
                 onChange={(e) => setSymptoms(e.target.value)}
                 className="min-h-[120px] border-gray-300 focus:border-red-500 focus:ring-red-500"
@@ -114,18 +197,18 @@ const SymptomChecker = () => {
               
               <Button
                 onClick={handleAnalyze}
-                disabled={!symptoms.trim() || isAnalyzing}
+                disabled={!symptoms.trim() || !patientAge || isAnalyzing}
                 className="w-full bg-red-600 hover:bg-red-700 text-white"
               >
                 {isAnalyzing ? (
                   <>
                     <Brain className="mr-2 h-4 w-4 animate-spin" />
-                    Analyzing with AI...
+                    Analyzing with Enhanced AI...
                   </>
                 ) : (
                   <>
                     <Search className="mr-2 h-4 w-4" />
-                    Analyze Symptoms
+                    Analyze with Context
                   </>
                 )}
               </Button>
@@ -135,11 +218,38 @@ const SymptomChecker = () => {
           {/* Analysis Results */}
           {analysis && (
             <div className="space-y-6">
+              {/* Risk Flags */}
+              {analysis.riskFlags && analysis.riskFlags.length > 0 && (
+                <Card className="border-0 shadow-sm">
+                  <CardHeader>
+                    <CardTitle className="flex items-center space-x-2">
+                      <Flag className="h-5 w-5 text-red-600" />
+                      <span>AI Risk Alerts</span>
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-3">
+                      {analysis.riskFlags.map((flag: RiskFlag, index: number) => (
+                        <div key={index} className={`p-3 rounded-lg border ${getRiskFlagColor(flag.severity)}`}>
+                          <div className="flex items-start justify-between">
+                            <div>
+                              <h4 className="font-medium">{flag.message}</h4>
+                              <p className="text-sm mt-1 opacity-90">{flag.action}</p>
+                            </div>
+                            <Badge className="capitalize">{flag.severity}</Badge>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
+
               {/* Primary Diagnosis */}
               <Card className="border-0 shadow-sm">
                 <CardHeader>
                   <CardTitle className="flex items-center justify-between">
-                    <span>AI Diagnosis</span>
+                    <span>Enhanced AI Diagnosis</span>
                     <Badge className={getTriageColor(analysis.triageLevel)}>
                       {analysis.triageLevel} priority
                     </Badge>
@@ -159,7 +269,6 @@ const SymptomChecker = () => {
                       </p>
                     </div>
 
-                    {/* Recommendations */}
                     <div>
                       <h4 className="font-medium text-gray-900 mb-2">Treatment Recommendations:</h4>
                       <ul className="space-y-1">
@@ -208,6 +317,70 @@ const SymptomChecker = () => {
                 </CardContent>
               </Card>
 
+              {/* Differential Diagnosis with Confidence */}
+              {analysis.differentialDiagnosis && analysis.differentialDiagnosis.length > 0 && (
+                <Card className="border-0 shadow-sm">
+                  <CardHeader>
+                    <CardTitle>Alternative Diagnoses</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-2">
+                      {analysis.differentialDiagnosis.map((condition: any, index: number) => (
+                        <div key={index} className="flex items-center justify-between p-2 bg-gray-50 rounded">
+                          <span className="text-sm text-gray-700">{condition.name}</span>
+                          <Badge variant="outline">{condition.confidence}%</Badge>
+                        </div>
+                      ))}
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
+
+              {/* Feedback Section */}
+              {!feedbackSubmitted && (
+                <Card className="border-0 shadow-sm bg-blue-50">
+                  <CardHeader>
+                    <CardTitle className="flex items-center space-x-2">
+                      <TrendingUp className="h-5 w-5 text-blue-600" />
+                      <span>Help Improve AI Accuracy</span>
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <p className="text-sm text-gray-700 mb-4">
+                      Your feedback trains our AI to better serve rural Kenya. Was this diagnosis accurate?
+                    </p>
+                    <div className="flex space-x-2">
+                      <Button 
+                        onClick={() => submitFeedback(true)}
+                        size="sm"
+                        className="bg-green-600 hover:bg-green-700 text-white"
+                      >
+                        <ThumbsUp className="mr-2 h-4 w-4" />
+                        Accurate
+                      </Button>
+                      <Button 
+                        onClick={() => submitFeedback(false, prompt('What was the actual diagnosis?') || undefined, prompt('Additional comments?') || undefined)}
+                        size="sm"
+                        variant="outline"
+                        className="border-red-600 text-red-600 hover:bg-red-50"
+                      >
+                        <ThumbsDown className="mr-2 h-4 w-4" />
+                        Needs correction
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
+
+              {feedbackSubmitted && (
+                <Alert className="border-green-200 bg-green-50">
+                  <CheckCircle className="h-4 w-4 text-green-600" />
+                  <AlertDescription className="text-green-800">
+                    Feedback submitted! This helps our AI learn and improve for your region.
+                  </AlertDescription>
+                </Alert>
+              )}
+
               {/* Referral Suggestion */}
               {analysis.triageLevel === 'high' || analysis.triageLevel === 'emergency' && (
                 <Card className="border-0 shadow-sm border-l-4 border-l-orange-500">
@@ -234,67 +407,6 @@ const SymptomChecker = () => {
                     </div>
                   </CardContent>
                 </Card>
-              )}
-
-              {/* Differential Diagnosis */}
-              {analysis.differentialDiagnosis && analysis.differentialDiagnosis.length > 0 && (
-                <Card className="border-0 shadow-sm">
-                  <CardHeader>
-                    <CardTitle>Other Possible Conditions</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="space-y-2">
-                      {analysis.differentialDiagnosis.map((condition: string, index: number) => (
-                        <div key={index} className="flex items-center space-x-2 p-2 bg-gray-50 rounded">
-                          <AlertTriangle className="h-4 w-4 text-gray-500" />
-                          <span className="text-sm text-gray-700">{condition}</span>
-                        </div>
-                      ))}
-                    </div>
-                  </CardContent>
-                </Card>
-              )}
-
-              {/* AI Learning Feedback */}
-              {!feedbackSubmitted && (
-                <Card className="border-0 shadow-sm bg-blue-50">
-                  <CardHeader>
-                    <CardTitle className="flex items-center space-x-2">
-                      <TrendingUp className="h-5 w-5 text-blue-600" />
-                      <span>Help Improve AI Accuracy</span>
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <p className="text-sm text-gray-700 mb-4">
-                      Was this diagnosis helpful? Your feedback helps improve our AI for rural Kenya.
-                    </p>
-                    <div className="flex space-x-2">
-                      <Button 
-                        onClick={() => submitFeedback(true)}
-                        size="sm"
-                        className="bg-green-600 hover:bg-green-700 text-white"
-                      >
-                        Yes, helpful
-                      </Button>
-                      <Button 
-                        onClick={() => submitFeedback(false)}
-                        size="sm"
-                        variant="outline"
-                      >
-                        Needs improvement
-                      </Button>
-                    </div>
-                  </CardContent>
-                </Card>
-              )}
-
-              {feedbackSubmitted && (
-                <Alert className="border-green-200 bg-green-50">
-                  <CheckCircle className="h-4 w-4 text-green-600" />
-                  <AlertDescription className="text-green-800">
-                    Thank you! Your feedback helps train our AI to better serve rural Kenya.
-                  </AlertDescription>
-                </Alert>
               )}
 
               {/* Action Buttons */}
@@ -331,6 +443,12 @@ const SymptomChecker = () => {
       </main>
     </div>
   );
+
+  function saveToPatientLog() {
+    // In real app, this would save to database and contribute to learning
+    console.log('Saving analysis for learning:', analysis);
+    alert('Analysis saved to patient log and contributed to AI learning!');
+  }
 };
 
 export default SymptomChecker;
