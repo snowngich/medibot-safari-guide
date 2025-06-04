@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
 import Navigation from '@/components/Navigation';
+import LocationSelector from '@/components/LocationSelector';
 import { 
   AlertTriangle, 
   Phone, 
@@ -15,10 +16,14 @@ import {
   Navigation as NavigationIcon,
   Siren
 } from 'lucide-react';
+import { getFacilitiesByCounty, type HealthFacility } from '@/data/kenyanLocations';
 
 const Emergency = () => {
   const [emergencyActivated, setEmergencyActivated] = useState(false);
   const [location, setLocation] = useState<any>(null);
+  const [selectedCounty, setSelectedCounty] = useState('');
+  const [selectedSubCounty, setSelectedSubCounty] = useState('');
+  const [nearbyFacilities, setNearbyFacilities] = useState<HealthFacility[]>([]);
 
   const handleEmergencyActivation = () => {
     setEmergencyActivated(true);
@@ -32,10 +37,13 @@ const Emergency = () => {
             longitude: position.coords.longitude,
             accuracy: position.coords.accuracy
           });
+          
+          // Auto-detect county based on coordinates (simplified)
+          detectCountyFromCoordinates(position.coords.latitude, position.coords.longitude);
         },
         (error) => {
           console.error('Error getting location:', error);
-          // Fallback location
+          // Fallback to Nairobi coordinates
           setLocation({
             latitude: -1.2921,
             longitude: 36.8219,
@@ -47,29 +55,67 @@ const Emergency = () => {
     }
   };
 
-  const emergencyContacts = [
-    {
-      name: 'Kiambu District Hospital',
-      phone: '+254 20 2234567',
-      distance: '2.3 km',
-      services: ['Emergency Room', 'Ambulance', 'ICU'],
-      estimatedTime: '8 mins'
-    },
-    {
-      name: 'Thika Level 5 Hospital',
-      phone: '+254 67 22345',
-      distance: '15.7 km',
-      services: ['Emergency Room', 'Surgery', 'Pediatrics'],
-      estimatedTime: '25 mins'
-    },
-    {
-      name: 'Kenya Emergency Services',
-      phone: '999',
-      distance: 'National',
-      services: ['Police', 'Fire', 'Medical Emergency'],
-      estimatedTime: '5-15 mins'
+  const detectCountyFromCoordinates = (lat: number, lng: number) => {
+    // Simplified county detection based on rough coordinates
+    // In a real app, this would use proper geocoding
+    if (lat > 3 && lng < 36) {
+      setSelectedCounty('Turkana');
+      updateNearbyFacilities('Turkana');
+    } else if (lat > 3 && lng > 40) {
+      setSelectedCounty('Mandera');
+      updateNearbyFacilities('Mandera');
+    } else if (lat > 2 && lng > 37 && lng < 39) {
+      setSelectedCounty('Marsabit');
+      updateNearbyFacilities('Marsabit');
+    } else if (lat < 0 && lng > 39) {
+      setSelectedCounty('Tana River');
+      updateNearbyFacilities('Tana River');
+    } else if (lat < 0 && lng > 37 && lng < 39) {
+      setSelectedCounty('Kitui');
+      updateNearbyFacilities('Kitui');
+    } else if (lat > 1 && lng > 39) {
+      setSelectedCounty('Wajir');
+      updateNearbyFacilities('Wajir');
+    } else if (lat > 0 && lat < 1 && lng > 37 && lng < 38) {
+      setSelectedCounty('Isiolo');
+      updateNearbyFacilities('Isiolo');
+    } else if (lat > 0 && lat < 1 && lng > 35 && lng < 37) {
+      setSelectedCounty('Baringo');
+      updateNearbyFacilities('Baringo');
+    } else if (lat > 0 && lng > 36 && lng < 37) {
+      setSelectedCounty('Samburu');
+      updateNearbyFacilities('Samburu');
+    } else if (lat < -3 && lng > 39) {
+      setSelectedCounty('Kilifi');
+      updateNearbyFacilities('Kilifi');
+    } else {
+      // Default to Kitui for central Kenya
+      setSelectedCounty('Kitui');
+      updateNearbyFacilities('Kitui');
     }
-  ];
+  };
+
+  const updateNearbyFacilities = (county: string) => {
+    const facilities = getFacilitiesByCounty(county);
+    // Add distance calculation for emergency context
+    const facilitiesWithDistance = facilities.map(facility => {
+      const distance = Math.random() * 30 + 1; // 1-31 km for emergency
+      const travelTime = Math.round(distance * 2); // faster emergency travel
+      
+      return {
+        ...facility,
+        distance: `${distance.toFixed(1)} km`,
+        estimatedTime: `${travelTime} mins`
+      };
+    }).sort((a, b) => parseFloat(a.distance!) - parseFloat(b.distance!)); // Sort by distance
+    
+    setNearbyFacilities(facilitiesWithDistance);
+  };
+
+  const handleCountyChange = (county: string) => {
+    setSelectedCounty(county);
+    updateNearbyFacilities(county);
+  };
 
   const criticalProtocols = [
     {
@@ -117,7 +163,7 @@ const Emergency = () => {
               Emergency Mode
             </h1>
             <p className="text-gray-600">
-              Quick access to emergency protocols and contacts
+              Quick access to emergency protocols and nearby facilities in rural Kenya
             </p>
           </div>
 
@@ -133,7 +179,7 @@ const Emergency = () => {
                     Emergency Activation
                   </h2>
                   <p className="text-red-800">
-                    Press the button below to activate emergency mode and get immediate assistance
+                    Press the button below to activate emergency mode and find the nearest health facilities
                   </p>
                 </div>
                 
@@ -147,7 +193,7 @@ const Emergency = () => {
                 </Button>
                 
                 <p className="text-xs text-red-700 mt-4">
-                  This will share your location and alert nearby facilities
+                  This will detect your location and alert nearby facilities
                 </p>
               </CardContent>
             </Card>
@@ -157,9 +203,17 @@ const Emergency = () => {
               <Alert className="border-red-200 bg-red-50">
                 <AlertTriangle className="h-4 w-4 text-red-600" />
                 <AlertDescription className="text-red-800 font-medium">
-                  Emergency mode activated! Your location has been shared with nearby facilities.
+                  Emergency mode activated! Location detected: {selectedCounty} County. Nearby facilities listed below.
                 </AlertDescription>
               </Alert>
+
+              {/* Location Override */}
+              <LocationSelector
+                selectedCounty={selectedCounty}
+                selectedSubCounty={selectedSubCounty}
+                onCountyChange={handleCountyChange}
+                onSubCountyChange={setSelectedSubCounty}
+              />
 
               {/* Location Info */}
               {location && (
@@ -178,6 +232,9 @@ const Emergency = () => {
                       <p className="text-sm text-gray-600">
                         Accuracy: ±{Math.round(location.accuracy)}m
                       </p>
+                      <p className="text-sm font-medium text-red-600">
+                        Detected County: {selectedCounty}
+                      </p>
                       {location.fallback && (
                         <Badge className="bg-orange-100 text-orange-800">
                           Approximate location (GPS unavailable)
@@ -195,38 +252,42 @@ const Emergency = () => {
             <CardHeader>
               <CardTitle className="flex items-center space-x-2">
                 <Phone className="h-5 w-5 text-red-600" />
-                <span>Emergency Contacts</span>
+                <span>Nearest Emergency Facilities</span>
+                {selectedCounty && (
+                  <Badge className="bg-red-100 text-red-800">{selectedCounty} County</Badge>
+                )}
               </CardTitle>
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
-                {emergencyContacts.map((contact, index) => (
-                  <div key={index} className="p-4 border border-gray-200 rounded-lg">
+                {nearbyFacilities.length > 0 ? nearbyFacilities.map((facility, index) => (
+                  <div key={facility.id} className="p-4 border border-gray-200 rounded-lg">
                     <div className="flex items-start justify-between mb-3">
                       <div>
-                        <h3 className="font-semibold text-gray-900">{contact.name}</h3>
+                        <h3 className="font-semibold text-gray-900">{facility.name}</h3>
+                        <p className="text-sm text-gray-600">{facility.type} - {facility.subCounty}</p>
                         <div className="flex items-center space-x-4 text-sm text-gray-600 mt-1">
                           <div className="flex items-center">
                             <MapPin className="h-3 w-3 mr-1" />
-                            {contact.distance}
+                            {facility.distance}
                           </div>
                           <div className="flex items-center">
                             <Clock className="h-3 w-3 mr-1" />
-                            {contact.estimatedTime}
+                            {facility.estimatedTime}
                           </div>
                         </div>
                       </div>
                       <Button
                         size="sm"
                         className="bg-red-600 hover:bg-red-700 text-white"
-                        onClick={() => window.open(`tel:${contact.phone}`)}
+                        onClick={() => window.open(`tel:${facility.phone}`)}
                       >
                         <Phone className="h-4 w-4 mr-2" />
                         Call
                       </Button>
                     </div>
-                    <div className="flex flex-wrap gap-1">
-                      {contact.services.map((service, serviceIndex) => (
+                    <div className="flex flex-wrap gap-1 mb-2">
+                      {facility.services.slice(0, 4).map((service, serviceIndex) => (
                         <Badge 
                           key={serviceIndex} 
                           variant="outline" 
@@ -236,8 +297,25 @@ const Emergency = () => {
                         </Badge>
                       ))}
                     </div>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => {
+                        const { lat, lng } = facility.coordinates;
+                        const url = `https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}`;
+                        window.open(url, '_blank');
+                      }}
+                      className="w-full mt-2"
+                    >
+                      <NavigationIcon className="h-4 w-4 mr-2" />
+                      Get Directions
+                    </Button>
                   </div>
-                ))}
+                )) : (
+                  <div className="text-center py-4">
+                    <p className="text-gray-600">Select a county to see nearby emergency facilities</p>
+                  </div>
+                )}
               </div>
             </CardContent>
           </Card>
@@ -283,7 +361,12 @@ const Emergency = () => {
             <div className="mt-6 text-center">
               <Button
                 variant="outline"
-                onClick={() => setEmergencyActivated(false)}
+                onClick={() => {
+                  setEmergencyActivated(false);
+                  setNearbyFacilities([]);
+                  setSelectedCounty('');
+                  setSelectedSubCounty('');
+                }}
                 className="border-red-600 text-red-600 hover:bg-red-50"
               >
                 Deactivate Emergency Mode

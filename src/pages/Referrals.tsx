@@ -1,11 +1,12 @@
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import Navigation from '@/components/Navigation';
+import LocationSelector from '@/components/LocationSelector';
 import { 
   MapPin, 
   Search, 
@@ -15,80 +16,62 @@ import {
   Star,
   Navigation as NavigationIcon,
   Send,
-  CheckCircle
+  CheckCircle,
+  Filter
 } from 'lucide-react';
+import { 
+  healthFacilities, 
+  getFacilitiesByCounty, 
+  getFacilitiesBySubCounty, 
+  searchFacilities,
+  type HealthFacility 
+} from '@/data/kenyanLocations';
 
 const Referrals = () => {
-  const [searchLocation, setSearchLocation] = useState('');
-  const [selectedFacility, setSelectedFacility] = useState<any>(null);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [selectedCounty, setSelectedCounty] = useState('');
+  const [selectedSubCounty, setSelectedSubCounty] = useState('');
+  const [selectedFacility, setSelectedFacility] = useState<HealthFacility | null>(null);
   const [referralSent, setReferralSent] = useState(false);
+  const [filteredFacilities, setFilteredFacilities] = useState<HealthFacility[]>(healthFacilities);
 
-  const facilities = [
-    {
-      id: 1,
-      name: 'Kiambu District Hospital',
-      type: 'District Hospital',
-      distance: '2.3 km',
-      travelTime: '8 mins',
-      rating: 4.2,
-      phone: '+254 20 2234567',
-      services: ['Emergency', 'Maternity', 'Pediatrics', 'Surgery', 'Laboratory'],
-      specialties: ['General Medicine', 'Obstetrics', 'Emergency Medicine'],
-      capacity: 'High',
-      waitTime: '30-45 mins',
-      coordinates: { lat: -1.1743, lng: 36.8350 }
-    },
-    {
-      id: 2,
-      name: 'Thika Level 5 Hospital',
-      type: 'Level 5 Hospital',
-      distance: '15.7 km',
-      travelTime: '25 mins',
-      rating: 4.5,
-      phone: '+254 67 22345',
-      services: ['Emergency', 'ICU', 'Surgery', 'Radiology', 'Pharmacy'],
-      specialties: ['Cardiology', 'Neurology', 'Orthopedics', 'Oncology'],
-      capacity: 'Medium',
-      waitTime: '45-60 mins',
-      coordinates: { lat: -1.0332, lng: 37.0694 }
-    },
-    {
-      id: 3,
-      name: 'Limuru Health Centre',
-      type: 'Health Centre',
-      distance: '8.1 km',
-      travelTime: '18 mins',
-      rating: 3.8,
-      phone: '+254 20 2023456',
-      services: ['Outpatient', 'Maternity', 'Laboratory', 'Pharmacy'],
-      specialties: ['Family Medicine', 'Maternal Health', 'Child Health'],
-      capacity: 'High',
-      waitTime: '15-30 mins',
-      coordinates: { lat: -1.1053, lng: 36.6428 }
-    },
-    {
-      id: 4,
-      name: 'Ruiru District Hospital',
-      type: 'District Hospital',
-      distance: '12.4 km',
-      travelTime: '22 mins',
-      rating: 4.0,
-      phone: '+254 20 2156789',
-      services: ['Emergency', 'Surgery', 'Maternity', 'Pediatrics'],
-      specialties: ['General Surgery', 'Internal Medicine', 'Pediatrics'],
-      capacity: 'Medium',
-      waitTime: '30-45 mins',
-      coordinates: { lat: -1.1395, lng: 36.9605 }
+  useEffect(() => {
+    let facilities = healthFacilities;
+
+    // Filter by county if selected
+    if (selectedCounty) {
+      facilities = getFacilitiesByCounty(selectedCounty);
     }
-  ];
 
-  const filteredFacilities = facilities.filter(facility =>
-    facility.name.toLowerCase().includes(searchLocation.toLowerCase()) ||
-    facility.type.toLowerCase().includes(searchLocation.toLowerCase()) ||
-    facility.services.some(service => 
-      service.toLowerCase().includes(searchLocation.toLowerCase())
-    )
-  );
+    // Filter by sub-county if selected
+    if (selectedSubCounty) {
+      facilities = getFacilitiesBySubCounty(selectedSubCounty);
+    }
+
+    // Apply search filter
+    if (searchQuery) {
+      facilities = searchFacilities(searchQuery).filter(facility => {
+        if (selectedCounty && facility.county !== selectedCounty) return false;
+        if (selectedSubCounty && facility.subCounty !== selectedSubCounty) return false;
+        return true;
+      });
+    }
+
+    // Calculate distances (simulated based on coordinates)
+    const facilitiesWithDistance = facilities.map(facility => {
+      // Simulate distance calculation - in real app, this would use actual geolocation
+      const distance = Math.random() * 50 + 2; // 2-52 km
+      const travelTime = Math.round(distance * 2.5); // rough estimate
+      
+      return {
+        ...facility,
+        distance: `${distance.toFixed(1)} km`,
+        travelTime: `${travelTime} mins`
+      };
+    });
+
+    setFilteredFacilities(facilitiesWithDistance);
+  }, [selectedCounty, selectedSubCounty, searchQuery]);
 
   const getCapacityColor = (capacity: string) => {
     switch (capacity) {
@@ -99,18 +82,23 @@ const Referrals = () => {
     }
   };
 
-  const sendReferral = (facility: any) => {
+  const sendReferral = (facility: HealthFacility) => {
     setSelectedFacility(facility);
-    // Simulate sending referral
     setTimeout(() => {
       setReferralSent(true);
     }, 1000);
   };
 
-  const getDirections = (facility: any) => {
+  const getDirections = (facility: HealthFacility) => {
     const { lat, lng } = facility.coordinates;
     const url = `https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}`;
     window.open(url, '_blank');
+  };
+
+  const clearFilters = () => {
+    setSelectedCounty('');
+    setSelectedSubCounty('');
+    setSearchQuery('');
   };
 
   return (
@@ -122,7 +110,7 @@ const Referrals = () => {
         <div className="mb-6">
           <h1 className="text-2xl font-bold text-gray-900 mb-2">Referral System</h1>
           <p className="text-gray-600">
-            Find and refer patients to nearby health facilities
+            Find and refer patients to health facilities across rural Kenya
           </p>
         </div>
 
@@ -131,23 +119,55 @@ const Referrals = () => {
           <Alert className="mb-6 border-green-200 bg-green-50">
             <CheckCircle className="h-4 w-4 text-green-600" />
             <AlertDescription className="text-green-800">
-              Referral successfully sent to {selectedFacility.name}. 
+              Referral successfully sent to {selectedFacility.name} in {selectedFacility.county}. 
               The facility has been notified via SMS.
             </AlertDescription>
           </Alert>
         )}
 
-        {/* Search */}
+        {/* Location Selector */}
+        <LocationSelector
+          selectedCounty={selectedCounty}
+          selectedSubCounty={selectedSubCounty}
+          onCountyChange={setSelectedCounty}
+          onSubCountyChange={setSelectedSubCounty}
+          className="mb-6"
+        />
+
+        {/* Search and Filters */}
         <Card className="mb-6 border-0 shadow-sm">
           <CardContent className="p-4">
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-              <Input
-                placeholder="Search by facility name, type, or service..."
-                value={searchLocation}
-                onChange={(e) => setSearchLocation(e.target.value)}
-                className="pl-10 border-gray-300 focus:border-red-500 focus:ring-red-500"
-              />
+            <div className="space-y-4">
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                <Input
+                  placeholder="Search by facility name, type, or service..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="pl-10 border-gray-300 focus:border-red-500 focus:ring-red-500"
+                />
+              </div>
+              
+              {(selectedCounty || selectedSubCounty || searchQuery) && (
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center space-x-2 text-sm text-gray-600">
+                    <Filter className="h-4 w-4" />
+                    <span>
+                      Showing {filteredFacilities.length} facilities
+                      {selectedCounty && ` in ${selectedCounty}`}
+                      {selectedSubCounty && `, ${selectedSubCounty}`}
+                    </span>
+                  </div>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={clearFilters}
+                    className="text-red-600 border-red-600 hover:bg-red-50"
+                  >
+                    Clear Filters
+                  </Button>
+                </div>
+              )}
             </div>
           </CardContent>
         </Card>
@@ -165,10 +185,7 @@ const Referrals = () => {
                         <div>
                           <h3 className="font-semibold text-lg text-gray-900">{facility.name}</h3>
                           <p className="text-sm text-gray-600">{facility.type}</p>
-                        </div>
-                        <div className="flex items-center space-x-1 ml-4">
-                          <Star className="h-4 w-4 text-yellow-500 fill-current" />
-                          <span className="text-sm font-medium text-gray-900">{facility.rating}</span>
+                          <p className="text-sm text-red-600 font-medium">{facility.county}, {facility.subCounty}</p>
                         </div>
                       </div>
                       
@@ -260,7 +277,7 @@ const Referrals = () => {
               <MapPin className="h-12 w-12 text-gray-400 mx-auto mb-4" />
               <h3 className="font-medium text-gray-900 mb-2">No facilities found</h3>
               <p className="text-gray-600">
-                Try adjusting your search criteria or check your connection.
+                Try adjusting your search criteria or location filters.
               </p>
             </CardContent>
           </Card>
