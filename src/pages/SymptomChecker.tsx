@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -23,10 +24,13 @@ import {
   User,
   ThumbsUp,
   ThumbsDown,
-  Flag
+  Flag,
+  Stethoscope,
+  Activity,
+  Target
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { enhancedDiagnosisEngine, type PatientProfile, type RiskFlag } from '@/data/kenyanDiseases';
+import { enhancedDiagnosisEngine, type PatientProfile, type EnhancedAnalysisResult } from '@/data/kenyanDiseases';
 
 const SymptomChecker = () => {
   const [symptoms, setSymptoms] = useState('');
@@ -36,7 +40,7 @@ const SymptomChecker = () => {
   const [patientGender, setPatientGender] = useState<'male' | 'female'>('male');
   const [medicalHistory, setMedicalHistory] = useState('');
   const [isAnalyzing, setIsAnalyzing] = useState(false);
-  const [analysis, setAnalysis] = useState<any>(null);
+  const [analysis, setAnalysis] = useState<EnhancedAnalysisResult | null>(null);
   const [feedbackSubmitted, setFeedbackSubmitted] = useState(false);
   const navigate = useNavigate();
 
@@ -65,11 +69,10 @@ const SymptomChecker = () => {
       
       setAnalysis({
         ...analysisResult,
-        symptoms: symptoms,
         timestamp: new Date().toISOString(),
         location: selectedCounty || 'Unknown',
         diagnosisId: `diag_${Date.now()}`
-      });
+      } as any);
       setIsAnalyzing(false);
     }, 2000);
   };
@@ -81,6 +84,16 @@ const SymptomChecker = () => {
       case 'medium': return 'bg-orange-100 text-orange-800 border-orange-200';
       case 'low': return 'bg-green-100 text-green-800 border-green-200';
       default: return 'bg-gray-100 text-gray-800 border-gray-200';
+    }
+  };
+
+  const getUrgencyColor = (urgency: string) => {
+    switch (urgency) {
+      case 'immediate': return 'bg-red-500 text-white';
+      case 'urgent': return 'bg-orange-500 text-white';
+      case 'routine': return 'bg-blue-500 text-white';
+      case 'self-care': return 'bg-green-500 text-white';
+      default: return 'bg-gray-500 text-white';
     }
   };
 
@@ -97,8 +110,8 @@ const SymptomChecker = () => {
     if (!analysis) return;
     
     enhancedDiagnosisEngine.submitFeedback({
-      diagnosisId: analysis.diagnosisId,
-      chwId: 'current-user', // In real app, get from auth
+      diagnosisId: (analysis as any).diagnosisId,
+      chwId: 'current-user',
       isCorrect,
       actualDiagnosis,
       comments,
@@ -113,12 +126,12 @@ const SymptomChecker = () => {
       <Navigation />
       
       <main className="container mx-auto px-4 py-6 pb-20 lg:pb-6">
-        <div className="max-w-2xl mx-auto">
+        <div className="max-w-4xl mx-auto">
           {/* Header */}
           <div className="mb-6">
-            <h1 className="text-2xl font-bold text-gray-900 mb-2">Enhanced AI Symptom Checker</h1>
+            <h1 className="text-2xl font-bold text-gray-900 mb-2">Enhanced AI Diagnostic Assistant</h1>
             <p className="text-gray-600">
-              Context-aware diagnostic assistance with learning capabilities
+              Doctor-level diagnostic support with location-aware intelligence and comprehensive analysis
             </p>
           </div>
 
@@ -183,13 +196,13 @@ const SymptomChecker = () => {
           <Card className="mb-6 border-0 shadow-sm">
             <CardHeader>
               <CardTitle className="flex items-center space-x-2">
-                <Brain className="h-5 w-5 text-red-600" />
-                <span>Symptoms & Clinical Presentation</span>
+                <Stethoscope className="h-5 w-5 text-red-600" />
+                <span>Clinical Presentation</span>
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               <Textarea
-                placeholder="Describe symptoms in detail, including duration, severity, and context... e.g., 'Child presents with high fever (39°C) for 2 days, vomiting, refuses to eat, lives near stagnant water'"
+                placeholder="Describe symptoms comprehensively, including duration, severity, and context... e.g., '3-day history of high fever (39°C), severe headache, vomiting x2, patient reports living near stagnant water, no mosquito net use'"
                 value={symptoms}
                 onChange={(e) => setSymptoms(e.target.value)}
                 className="min-h-[120px] border-gray-300 focus:border-red-500 focus:ring-red-500"
@@ -203,19 +216,19 @@ const SymptomChecker = () => {
                 {isAnalyzing ? (
                   <>
                     <Brain className="mr-2 h-4 w-4 animate-spin" />
-                    Analyzing with Enhanced AI...
+                    Processing Clinical Analysis...
                   </>
                 ) : (
                   <>
                     <Search className="mr-2 h-4 w-4" />
-                    Analyze with Context
+                    Generate Differential Diagnosis
                   </>
                 )}
               </Button>
             </CardContent>
           </Card>
 
-          {/* Analysis Results */}
+          {/* Enhanced Analysis Results */}
           {analysis && (
             <div className="space-y-6">
               {/* Risk Flags */}
@@ -224,12 +237,12 @@ const SymptomChecker = () => {
                   <CardHeader>
                     <CardTitle className="flex items-center space-x-2">
                       <Flag className="h-5 w-5 text-red-600" />
-                      <span>AI Risk Alerts</span>
+                      <span>Critical Risk Alerts</span>
                     </CardTitle>
                   </CardHeader>
                   <CardContent>
                     <div className="space-y-3">
-                      {analysis.riskFlags.map((flag: RiskFlag, index: number) => (
+                      {analysis.riskFlags.map((flag, index) => (
                         <div key={index} className={`p-3 rounded-lg border ${getRiskFlagColor(flag.severity)}`}>
                           <div className="flex items-start justify-between">
                             <div>
@@ -245,11 +258,36 @@ const SymptomChecker = () => {
                 </Card>
               )}
 
+              {/* Red Flags */}
+              {analysis.redFlags && analysis.redFlags.length > 0 && (
+                <Card className="border-0 shadow-sm border-l-4 border-l-red-500">
+                  <CardHeader>
+                    <CardTitle className="flex items-center space-x-2 text-red-700">
+                      <AlertTriangle className="h-5 w-5" />
+                      <span>Emergency Warning Signs</span>
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-2">
+                      {analysis.redFlags.map((flag, index) => (
+                        <div key={index} className="flex items-center space-x-2 text-red-700">
+                          <AlertTriangle className="h-4 w-4" />
+                          <span className="text-sm font-medium">{flag}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
+
               {/* Primary Diagnosis */}
               <Card className="border-0 shadow-sm">
                 <CardHeader>
                   <CardTitle className="flex items-center justify-between">
-                    <span>Enhanced AI Diagnosis</span>
+                    <span className="flex items-center space-x-2">
+                      <Target className="h-5 w-5 text-red-600" />
+                      <span>Primary Diagnosis</span>
+                    </span>
                     <Badge className={getTriageColor(analysis.triageLevel)}>
                       {analysis.triageLevel} priority
                     </Badge>
@@ -262,73 +300,95 @@ const SymptomChecker = () => {
                         {analysis.primaryDiagnosis}
                       </h3>
                       <p className="text-sm text-gray-600 mt-1">
-                        Confidence: {analysis.confidence}%
-                        {analysis.prevalentInRegion && (
-                          <span className="ml-2 text-orange-600">• Common in {analysis.locationContext}</span>
+                        Clinical Confidence: {analysis.confidence}%
+                        {analysis.locationContext.prevalentInRegion && (
+                          <span className="ml-2 text-orange-600">• Endemic in {selectedCounty}</span>
+                        )}
+                        {analysis.locationContext.seasonalRisk && (
+                          <span className="ml-2 text-blue-600">• High seasonal risk</span>
+                        )}
+                        {analysis.locationContext.outbreakRisk && (
+                          <span className="ml-2 text-red-600">• Active outbreak area</span>
                         )}
                       </p>
                     </div>
 
+                    {/* Clinical Reasoning */}
+                    <div className="bg-blue-50 p-4 rounded-lg">
+                      <h4 className="font-medium text-blue-900 mb-2 flex items-center">
+                        <Brain className="h-4 w-4 mr-1" />
+                        Clinical Reasoning:
+                      </h4>
+                      <p className="text-sm text-blue-800">{analysis.clinicalReasoning}</p>
+                    </div>
+
+                    {/* Treatment Guidance */}
                     <div>
-                      <h4 className="font-medium text-gray-900 mb-2">Treatment Recommendations:</h4>
+                      <h4 className="font-medium text-gray-900 mb-2">Immediate Management:</h4>
                       <ul className="space-y-1">
-                        {analysis.recommendations.map((rec: string, index: number) => (
+                        {analysis.treatmentGuidance.immediate.map((treatment, index) => (
                           <li key={index} className="flex items-start space-x-2">
                             <CheckCircle className="h-4 w-4 text-green-600 mt-0.5 flex-shrink-0" />
-                            <span className="text-sm text-gray-700">{rec}</span>
+                            <span className="text-sm text-gray-700">{treatment}</span>
                           </li>
                         ))}
                       </ul>
                     </div>
 
-                    {/* Emergency Signals */}
-                    {analysis.emergencySignals && analysis.emergencySignals.length > 0 && (
-                      <div>
-                        <h4 className="font-medium text-red-900 mb-2">⚠️ Emergency Signs to Watch:</h4>
-                        <ul className="space-y-1">
-                          {analysis.emergencySignals.map((signal: string, index: number) => (
-                            <li key={index} className="flex items-start space-x-2">
-                              <AlertTriangle className="h-4 w-4 text-red-600 mt-0.5 flex-shrink-0" />
-                              <span className="text-sm text-red-700">{signal}</span>
-                            </li>
-                          ))}
-                        </ul>
-                      </div>
-                    )}
-
-                    {/* Prevention Measures */}
-                    {analysis.preventionMeasures && (
-                      <div>
-                        <h4 className="font-medium text-gray-900 mb-2 flex items-center">
-                          <Shield className="h-4 w-4 mr-1" />
-                          Prevention Measures:
+                    {/* Referral Guidance */}
+                    {analysis.treatmentGuidance.referralNeeded && (
+                      <div className="bg-orange-50 p-4 rounded-lg">
+                        <h4 className="font-medium text-orange-900 mb-2 flex items-center">
+                          <Clock className="h-4 w-4 mr-1" />
+                          Referral Required:
                         </h4>
-                        <ul className="space-y-1">
-                          {analysis.preventionMeasures.map((measure: string, index: number) => (
-                            <li key={index} className="flex items-start space-x-2">
-                              <CheckCircle className="h-4 w-4 text-blue-600 mt-0.5 flex-shrink-0" />
-                              <span className="text-sm text-gray-700">{measure}</span>
-                            </li>
-                          ))}
-                        </ul>
+                        <p className="text-sm text-orange-800">
+                          {analysis.treatmentGuidance.referralUrgency === 'immediate' 
+                            ? 'IMMEDIATE referral to nearest health facility' 
+                            : `Refer within ${analysis.treatmentGuidance.referralUrgency?.replace('_', ' ')}`}
+                        </p>
                       </div>
                     )}
                   </div>
                 </CardContent>
               </Card>
 
-              {/* Differential Diagnosis with Confidence */}
-              {analysis.differentialDiagnosis && analysis.differentialDiagnosis.length > 0 && (
+              {/* Comprehensive Differential Diagnosis */}
+              {analysis.differentialDiagnoses && analysis.differentialDiagnoses.length > 0 && (
                 <Card className="border-0 shadow-sm">
                   <CardHeader>
-                    <CardTitle>Alternative Diagnoses</CardTitle>
+                    <CardTitle className="flex items-center space-x-2">
+                      <Activity className="h-5 w-5 text-blue-600" />
+                      <span>Differential Diagnoses</span>
+                    </CardTitle>
                   </CardHeader>
                   <CardContent>
-                    <div className="space-y-2">
-                      {analysis.differentialDiagnosis.map((condition: any, index: number) => (
-                        <div key={index} className="flex items-center justify-between p-2 bg-gray-50 rounded">
-                          <span className="text-sm text-gray-700">{condition.name}</span>
-                          <Badge variant="outline">{condition.confidence}%</Badge>
+                    <div className="space-y-4">
+                      {analysis.differentialDiagnoses.map((condition, index) => (
+                        <div key={index} className="border rounded-lg p-4 bg-gray-50">
+                          <div className="flex items-start justify-between mb-2">
+                            <div className="flex-1">
+                              <h4 className="font-medium text-gray-900">{condition.name}</h4>
+                              <p className="text-sm text-gray-600 mt-1">{condition.reasoning}</p>
+                            </div>
+                            <div className="flex flex-col items-end space-y-1">
+                              <Badge variant="outline">{condition.confidence}%</Badge>
+                              <Badge className={getUrgencyColor(condition.urgency)} variant="secondary">
+                                {condition.urgency}
+                              </Badge>
+                            </div>
+                          </div>
+                          <div className="mt-3">
+                            <h5 className="text-sm font-medium text-gray-700 mb-1">Next Steps:</h5>
+                            <ul className="text-sm text-gray-600 space-y-1">
+                              {condition.nextSteps.map((step, stepIndex) => (
+                                <li key={stepIndex} className="flex items-start space-x-1">
+                                  <span className="text-gray-400">•</span>
+                                  <span>{step}</span>
+                                </li>
+                              ))}
+                            </ul>
+                          </div>
                         </div>
                       ))}
                     </div>
@@ -336,18 +396,43 @@ const SymptomChecker = () => {
                 </Card>
               )}
 
+              {/* Follow-up Care */}
+              <Card className="border-0 shadow-sm">
+                <CardHeader>
+                  <CardTitle className="flex items-center space-x-2">
+                    <Shield className="h-5 w-5 text-green-600" />
+                    <span>Follow-up & Prevention</span>
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-3">
+                    <div>
+                      <h4 className="font-medium text-gray-900 mb-2">Follow-up Instructions:</h4>
+                      <ul className="space-y-1">
+                        {analysis.treatmentGuidance.followUp.map((instruction, index) => (
+                          <li key={index} className="flex items-start space-x-2">
+                            <CheckCircle className="h-4 w-4 text-blue-600 mt-0.5 flex-shrink-0" />
+                            <span className="text-sm text-gray-700">{instruction}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
               {/* Feedback Section */}
               {!feedbackSubmitted && (
                 <Card className="border-0 shadow-sm bg-blue-50">
                   <CardHeader>
                     <CardTitle className="flex items-center space-x-2">
                       <TrendingUp className="h-5 w-5 text-blue-600" />
-                      <span>Help Improve AI Accuracy</span>
+                      <span>Improve AI Accuracy - CHW Feedback</span>
                     </CardTitle>
                   </CardHeader>
                   <CardContent>
                     <p className="text-sm text-gray-700 mb-4">
-                      Your feedback trains our AI to better serve rural Kenya. Was this diagnosis accurate?
+                      Your clinical expertise helps train our AI for better rural Kenya healthcare. Was this diagnostic assessment accurate?
                     </p>
                     <div className="flex space-x-2">
                       <Button 
@@ -356,16 +441,16 @@ const SymptomChecker = () => {
                         className="bg-green-600 hover:bg-green-700 text-white"
                       >
                         <ThumbsUp className="mr-2 h-4 w-4" />
-                        Accurate
+                        Accurate Diagnosis
                       </Button>
                       <Button 
-                        onClick={() => submitFeedback(false, prompt('What was the actual diagnosis?') || undefined, prompt('Additional comments?') || undefined)}
+                        onClick={() => submitFeedback(false, prompt('What was the actual diagnosis?') || undefined, prompt('Clinical comments for learning?') || undefined)}
                         size="sm"
                         variant="outline"
                         className="border-red-600 text-red-600 hover:bg-red-50"
                       >
                         <ThumbsDown className="mr-2 h-4 w-4" />
-                        Needs correction
+                        Needs Correction
                       </Button>
                     </div>
                   </CardContent>
@@ -376,24 +461,24 @@ const SymptomChecker = () => {
                 <Alert className="border-green-200 bg-green-50">
                   <CheckCircle className="h-4 w-4 text-green-600" />
                   <AlertDescription className="text-green-800">
-                    Feedback submitted! This helps our AI learn and improve for your region.
+                    Clinical feedback submitted! This helps our AI learn regional disease patterns and improve diagnostic accuracy for {selectedCounty}.
                   </AlertDescription>
                 </Alert>
               )}
 
               {/* Referral Suggestion */}
-              {analysis.triageLevel === 'high' || analysis.triageLevel === 'emergency' && (
+              {analysis.treatmentGuidance.referralNeeded && (
                 <Card className="border-0 shadow-sm border-l-4 border-l-orange-500">
                   <CardHeader>
                     <CardTitle className="flex items-center space-x-2">
                       <MapPin className="h-5 w-5 text-orange-600" />
-                      <span>Referral Recommended</span>
+                      <span>Referral Required</span>
                     </CardTitle>
                   </CardHeader>
                   <CardContent>
                     <div className="space-y-3">
                       <p className="text-gray-700">
-                        Based on severity, immediate referral to a health facility is recommended.
+                        Based on clinical assessment, {analysis.treatmentGuidance.referralUrgency === 'immediate' ? 'IMMEDIATE' : 'prompt'} referral to a health facility is recommended.
                       </p>
                       <Button 
                         variant="outline" 
@@ -412,12 +497,12 @@ const SymptomChecker = () => {
               {/* Action Buttons */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <Button 
-                  onClick={saveToPatientLog}
+                  onClick={() => console.log('Saving analysis:', analysis)}
                   variant="outline"
                   className="border-red-600 text-red-600 hover:bg-red-50"
                 >
                   <Save className="mr-2 h-4 w-4" />
-                  Save to Patient Log
+                  Save Clinical Assessment
                 </Button>
                 <Button 
                   onClick={() => navigate('/patients/new')}
@@ -428,13 +513,12 @@ const SymptomChecker = () => {
                 </Button>
               </div>
 
-              {/* Disclaimer */}
+              {/* Medical Disclaimer */}
               <Alert className="border-orange-200 bg-orange-50">
                 <AlertTriangle className="h-4 w-4 text-orange-600" />
                 <AlertDescription className="text-orange-800">
-                  This AI analysis is trained on Kenyan disease patterns but is for assistance only. 
-                  Always use clinical judgment and follow local protocols. Seek immediate medical 
-                  attention for emergency cases.
+                  This AI diagnostic assistant is trained on Kenyan disease patterns and clinical protocols but serves as a clinical decision support tool only. 
+                  Always apply professional clinical judgment, follow local treatment guidelines, and seek immediate medical attention for emergency cases.
                 </AlertDescription>
               </Alert>
             </div>
@@ -443,12 +527,6 @@ const SymptomChecker = () => {
       </main>
     </div>
   );
-
-  function saveToPatientLog() {
-    // In real app, this would save to database and contribute to learning
-    console.log('Saving analysis for learning:', analysis);
-    alert('Analysis saved to patient log and contributed to AI learning!');
-  }
 };
 
 export default SymptomChecker;

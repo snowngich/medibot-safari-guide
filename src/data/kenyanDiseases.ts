@@ -1,3 +1,4 @@
+
 export interface Disease {
   id: string;
   name: string;
@@ -10,6 +11,7 @@ export interface Disease {
   preventionMeasures: string[];
   emergencySignals: string[];
   triageLevel: 'low' | 'medium' | 'high' | 'emergency';
+  prevalenceScore: number; // Add base prevalence score
 }
 
 export interface SymptomPattern {
@@ -58,6 +60,35 @@ export interface RiskFlag {
   action: string;
 }
 
+export interface DifferentialDiagnosis {
+  name: string;
+  confidence: number;
+  reasoning: string;
+  urgency: 'immediate' | 'urgent' | 'routine' | 'self-care';
+  nextSteps: string[];
+}
+
+export interface EnhancedAnalysisResult {
+  primaryDiagnosis: string;
+  confidence: number;
+  triageLevel: 'low' | 'medium' | 'high' | 'emergency';
+  differentialDiagnoses: DifferentialDiagnosis[];
+  treatmentGuidance: {
+    immediate: string[];
+    followUp: string[];
+    referralNeeded: boolean;
+    referralUrgency?: 'immediate' | 'within_24h' | 'within_week';
+  };
+  riskFlags: RiskFlag[];
+  locationContext: {
+    prevalentInRegion: boolean;
+    seasonalRisk: boolean;
+    outbreakRisk: boolean;
+  };
+  clinicalReasoning: string;
+  redFlags: string[];
+}
+
 export const kenyanDiseases: Disease[] = [
   {
     id: 'malaria',
@@ -79,7 +110,8 @@ export const kenyanDiseases: Disease[] = [
       'Chemoprophylaxis for high-risk groups'
     ],
     emergencySignals: ['altered consciousness', 'severe anemia', 'respiratory distress', 'convulsions'],
-    triageLevel: 'high'
+    triageLevel: 'high',
+    prevalenceScore: 85
   },
   {
     id: 'pneumonia',
@@ -101,80 +133,32 @@ export const kenyanDiseases: Disease[] = [
       'Reduced indoor air pollution'
     ],
     emergencySignals: ['severe respiratory distress', 'cyanosis', 'inability to feed', 'altered consciousness'],
-    triageLevel: 'high'
+    triageLevel: 'high',
+    prevalenceScore: 70
   },
   {
-    id: 'diarrhea',
-    name: 'Acute Diarrheal Disease',
+    id: 'typhoid',
+    name: 'Typhoid Fever',
     category: 'Infectious',
-    commonSymptoms: ['loose stools', 'dehydration', 'vomiting', 'abdominal pain', 'fever'],
-    riskFactors: ['poor sanitation', 'contaminated water', 'poor hygiene', 'malnutrition'],
-    prevalentRegions: ['Turkana', 'Mandera', 'Wajir', 'Tana River'],
-    seasonality: 'Peak during dry seasons and floods',
+    commonSymptoms: ['prolonged fever', 'headache', 'abdominal pain', 'rose spots', 'constipation', 'weakness'],
+    riskFactors: ['contaminated water', 'poor sanitation', 'overcrowding', 'travel'],
+    prevalentRegions: ['Kitui', 'Mandera', 'Wajir', 'Tana River'],
+    seasonality: 'Year-round, peaks during dry seasons',
     treatmentGuidelines: [
-      'ORS (Oral Rehydration Solution)',
-      'Zinc supplementation for children',
-      'Continue feeding',
-      'Antibiotics only for bloody diarrhea'
+      'Ciprofloxacin or Azithromycin',
+      'Ceftriaxone for severe cases',
+      'Supportive care with fluids'
     ],
     preventionMeasures: [
-      'Safe water storage',
-      'Hand washing with soap',
-      'Proper sanitation',
-      'Food safety practices'
+      'Safe water and sanitation',
+      'Typhoid vaccination',
+      'Food safety practices',
+      'Hand hygiene'
     ],
-    emergencySignals: ['severe dehydration', 'blood in stool', 'high fever', 'persistent vomiting'],
-    triageLevel: 'medium'
+    emergencySignals: ['intestinal bleeding', 'perforation', 'severe dehydration', 'neurological complications'],
+    triageLevel: 'high',
+    prevalenceScore: 60
   },
-  {
-    id: 'malnutrition',
-    name: 'Acute Malnutrition',
-    category: 'Nutritional',
-    commonSymptoms: ['weight loss', 'growth stunting', 'muscle wasting', 'edema', 'weakness'],
-    riskFactors: ['food insecurity', 'poor feeding practices', 'repeated infections', 'poverty'],
-    prevalentRegions: ['Turkana', 'Mandera', 'Marsabit', 'Wajir'],
-    seasonality: 'Worsens during drought periods',
-    treatmentGuidelines: [
-      'RUTF (Ready-to-Use Therapeutic Food)',
-      'Micronutrient supplementation',
-      'Treatment of medical complications',
-      'Nutrition counseling'
-    ],
-    preventionMeasures: [
-      'Exclusive breastfeeding 0-6 months',
-      'Appropriate complementary feeding',
-      'Micronutrient supplementation',
-      'Growth monitoring'
-    ],
-    emergencySignals: ['severe acute malnutrition', 'medical complications', 'appetite loss'],
-    triageLevel: 'high'
-  },
-  {
-    id: 'tuberculosis',
-    name: 'Tuberculosis (TB)',
-    category: 'Infectious',
-    commonSymptoms: ['persistent cough', 'weight loss', 'night sweats', 'fever', 'chest pain'],
-    riskFactors: ['HIV infection', 'malnutrition', 'overcrowding', 'poor ventilation'],
-    prevalentRegions: ['Kitui', 'Kilifi', 'Baringo', 'Isiolo'],
-    seasonality: 'Year-round transmission',
-    treatmentGuidelines: [
-      'DOTS (Directly Observed Treatment)',
-      'Standard 6-month regimen',
-      'Regular monitoring',
-      'Contact tracing'
-    ],
-    preventionMeasures: [
-      'BCG vaccination',
-      'Improved ventilation',
-      'Early case detection',
-      'HIV testing and treatment'
-    ],
-    emergencySignals: ['hemoptysis', 'severe respiratory distress', 'drug resistance suspected'],
-    triageLevel: 'medium'
-  }
-];
-
-export const expandedKenyanDiseases: Disease[] = [
   {
     id: 'cholera',
     name: 'Cholera',
@@ -196,53 +180,80 @@ export const expandedKenyanDiseases: Disease[] = [
       'Oral cholera vaccine in outbreak areas'
     ],
     emergencySignals: ['severe dehydration', 'sunken eyes', 'poor skin elasticity', 'weak pulse'],
-    triageLevel: 'emergency'
+    triageLevel: 'emergency',
+    prevalenceScore: 40
   },
   {
-    id: 'maternal_sepsis',
-    name: 'Maternal Sepsis',
-    category: 'Maternal',
-    commonSymptoms: ['high fever', 'chills', 'abdominal pain', 'foul-smelling discharge', 'rapid heartbeat'],
-    riskFactors: ['prolonged labor', 'unclean delivery', 'retained placenta', 'cesarean section'],
-    prevalentRegions: ['Turkana', 'Marsabit', 'Mandera', 'Wajir'],
-    seasonality: 'Year-round, higher in areas with limited healthcare access',
+    id: 'tuberculosis',
+    name: 'Tuberculosis (TB)',
+    category: 'Infectious',
+    commonSymptoms: ['persistent cough', 'weight loss', 'night sweats', 'fever', 'chest pain', 'blood in sputum'],
+    riskFactors: ['HIV infection', 'malnutrition', 'overcrowding', 'poor ventilation', 'diabetes'],
+    prevalentRegions: ['Kitui', 'Kilifi', 'Baringo', 'Isiolo'],
+    seasonality: 'Year-round transmission',
     treatmentGuidelines: [
-      'Immediate antibiotic therapy',
-      'IV fluids and supportive care',
-      'Source control of infection',
-      'Emergency referral to hospital'
+      'DOTS (Directly Observed Treatment)',
+      'Standard 6-month regimen',
+      'Regular monitoring',
+      'Contact tracing'
     ],
     preventionMeasures: [
-      'Skilled birth attendance',
-      'Clean delivery practices',
-      'Antenatal care',
-      'Early recognition of complications'
+      'BCG vaccination',
+      'Improved ventilation',
+      'Early case detection',
+      'HIV testing and treatment'
     ],
-    emergencySignals: ['high fever >38.5°C', 'altered consciousness', 'severe abdominal pain', 'heavy bleeding'],
-    triageLevel: 'emergency'
+    emergencySignals: ['hemoptysis', 'severe respiratory distress', 'drug resistance suspected'],
+    triageLevel: 'medium',
+    prevalenceScore: 55
   },
   {
-    id: 'neonatal_sepsis',
-    name: 'Neonatal Sepsis',
-    category: 'Child Health',
-    commonSymptoms: ['poor feeding', 'lethargy', 'temperature instability', 'breathing difficulties', 'jaundice'],
-    riskFactors: ['premature birth', 'low birth weight', 'prolonged rupture of membranes', 'maternal infection'],
-    prevalentRegions: ['Turkana', 'Samburu', 'Marsabit', 'Baringo'],
-    seasonality: 'Year-round, higher in resource-limited settings',
+    id: 'acute_diarrhea',
+    name: 'Acute Diarrheal Disease',
+    category: 'Infectious',
+    commonSymptoms: ['loose stools', 'dehydration', 'vomiting', 'abdominal pain', 'fever'],
+    riskFactors: ['poor sanitation', 'contaminated water', 'poor hygiene', 'malnutrition'],
+    prevalentRegions: ['Turkana', 'Mandera', 'Wajir', 'Tana River'],
+    seasonality: 'Peak during dry seasons and floods',
     treatmentGuidelines: [
-      'Immediate antibiotic therapy',
-      'Supportive care and monitoring',
-      'Temperature regulation',
-      'Feeding support'
+      'ORS (Oral Rehydration Solution)',
+      'Zinc supplementation for children',
+      'Continue feeding',
+      'Antibiotics only for bloody diarrhea'
     ],
     preventionMeasures: [
-      'Clean delivery practices',
-      'Immediate skin-to-skin contact',
-      'Early breastfeeding initiation',
-      'Proper cord care'
+      'Safe water storage',
+      'Hand washing with soap',
+      'Proper sanitation',
+      'Food safety practices'
     ],
-    emergencySignals: ['inability to feed', 'convulsions', 'severe breathing difficulties', 'hypothermia'],
-    triageLevel: 'emergency'
+    emergencySignals: ['severe dehydration', 'blood in stool', 'high fever', 'persistent vomiting'],
+    triageLevel: 'medium',
+    prevalenceScore: 75
+  },
+  {
+    id: 'malnutrition',
+    name: 'Acute Malnutrition',
+    category: 'Nutritional',
+    commonSymptoms: ['weight loss', 'growth stunting', 'muscle wasting', 'edema', 'weakness', 'poor appetite'],
+    riskFactors: ['food insecurity', 'poor feeding practices', 'repeated infections', 'poverty'],
+    prevalentRegions: ['Turkana', 'Mandera', 'Marsabit', 'Wajir'],
+    seasonality: 'Worsens during drought periods',
+    treatmentGuidelines: [
+      'RUTF (Ready-to-Use Therapeutic Food)',
+      'Micronutrient supplementation',
+      'Treatment of medical complications',
+      'Nutrition counseling'
+    ],
+    preventionMeasures: [
+      'Exclusive breastfeeding 0-6 months',
+      'Appropriate complementary feeding',
+      'Micronutrient supplementation',
+      'Growth monitoring'
+    ],
+    emergencySignals: ['severe acute malnutrition', 'medical complications', 'appetite loss'],
+    triageLevel: 'high',
+    prevalenceScore: 65
   }
 ];
 
@@ -307,90 +318,119 @@ export const enhancedDiagnosisEngine = {
     patientProfile: PatientProfile,
     location?: string,
     includeOutbreakContext: boolean = true
-  ): any => {
+  ): EnhancedAnalysisResult => {
     const symptomsList = symptoms.map(s => s.toLowerCase());
     
-    // Get all diseases (original + expanded)
-    const allDiseases = [...kenyanDiseases, ...expandedKenyanDiseases];
-    
-    // Filter diseases by symptoms
-    let possibleDiseases = allDiseases.filter(disease => 
-      disease.commonSymptoms.some(symptom => 
-        symptomsList.some(inputSymptom => inputSymptom.includes(symptom))
-      )
-    );
-
-    // Apply contextual scoring
-    possibleDiseases = possibleDiseases.map(disease => {
+    // Advanced symptom-disease matching with scoring
+    let possibleDiseases = kenyanDiseases.map(disease => {
       let score = 0;
+      let reasoning = '';
       
-      // Base symptom matching
+      // Base symptom matching (40% weight)
       const matchedSymptoms = disease.commonSymptoms.filter(symptom =>
-        symptomsList.some(inputSymptom => inputSymptom.includes(symptom))
+        symptomsList.some(inputSymptom => inputSymptom.includes(symptom) || symptom.includes(inputSymptom))
       );
-      score += (matchedSymptoms.length / disease.commonSymptoms.length) * 60;
+      const symptomScore = (matchedSymptoms.length / disease.commonSymptoms.length) * 40;
+      score += symptomScore;
       
-      // Location-based prevalence boost
-      if (location && disease.prevalentRegions.includes(location)) {
-        score += 20;
+      if (matchedSymptoms.length > 0) {
+        reasoning += `Symptoms match: ${matchedSymptoms.join(', ')}. `;
       }
       
-      // Age-specific conditions
+      // Location-based prevalence (25% weight)
+      if (location && disease.prevalentRegions.includes(location)) {
+        score += 25;
+        reasoning += `High prevalence in ${location}. `;
+      }
+      
+      // Age-specific conditions (15% weight)
       if (patientProfile.age < 5 && disease.category === 'Child Health') {
         score += 15;
+        reasoning += 'Common in children under 5. ';
       }
       if (patientProfile.age >= 15 && patientProfile.age <= 49 && disease.category === 'Maternal') {
         score += 15;
+        reasoning += 'Relevant for reproductive age group. ';
       }
       
-      // Gender-specific conditions
-      if (patientProfile.gender === 'female' && disease.category === 'Maternal') {
+      // Seasonal factors (10% weight)
+      const currentMonth = new Date().getMonth();
+      const isRainySeason = currentMonth >= 2 && currentMonth <= 4 || currentMonth >= 9 && currentMonth <= 11;
+      if (disease.seasonality && disease.seasonality.includes('rainy') && isRainySeason) {
         score += 10;
+        reasoning += 'Currently in high-risk season. ';
       }
       
-      return { ...disease, confidence: Math.min(95, score) };
+      // Outbreak context (10% weight)
+      if (includeOutbreakContext && location) {
+        const activeOutbreak = currentOutbreaks.find(o => 
+          o.location === location && o.disease.toLowerCase().includes(disease.name.toLowerCase())
+        );
+        if (activeOutbreak) {
+          score += 10;
+          reasoning += `Active outbreak in area (${activeOutbreak.cases} cases). `;
+        }
+      }
+      
+      return {
+        ...disease,
+        confidence: Math.min(95, Math.max(5, score)),
+        reasoning: reasoning.trim() || 'Based on symptom pattern analysis.'
+      };
     });
 
-    // Sort by confidence
-    possibleDiseases.sort((a, b) => b.confidence - a.confidence);
+    // Filter and sort by confidence
+    possibleDiseases = possibleDiseases
+      .filter(d => d.confidence > 15)
+      .sort((a, b) => b.confidence - a.confidence);
     
     if (possibleDiseases.length === 0) {
-      return {
-        primaryDiagnosis: 'General medical consultation needed',
-        confidence: 60,
-        triageLevel: 'medium',
-        recommendations: ['Detailed clinical assessment required'],
-        differentialDiagnosis: [],
-        riskFlags: [],
-        locationContext: location
-      };
+      return createFallbackDiagnosis(symptoms, patientProfile, location);
     }
 
     const primaryDisease = possibleDiseases[0];
     
+    // Generate comprehensive differential diagnoses
+    const differentialDiagnoses: DifferentialDiagnosis[] = possibleDiseases.slice(0, 5).map(disease => ({
+      name: disease.name,
+      confidence: Math.round(disease.confidence),
+      reasoning: disease.reasoning,
+      urgency: determineUrgency(disease, symptomsList),
+      nextSteps: generateNextSteps(disease, patientProfile)
+    }));
+    
     // Generate risk flags
     const riskFlags = generateRiskFlags(symptomsList, patientProfile, location);
+    
+    // Clinical reasoning
+    const clinicalReasoning = generateClinicalReasoning(
+      symptomsList, 
+      patientProfile, 
+      primaryDisease, 
+      location
+    );
+    
+    // Red flags
+    const redFlags = identifyRedFlags(symptomsList, primaryDisease);
     
     return {
       primaryDiagnosis: primaryDisease.name,
       confidence: Math.round(primaryDisease.confidence),
       triageLevel: primaryDisease.triageLevel,
-      recommendations: primaryDisease.treatmentGuidelines.slice(0, 3),
-      differentialDiagnosis: possibleDiseases.slice(1, 4).map(d => ({
-        name: d.name,
-        confidence: Math.round(d.confidence)
-      })),
-      emergencySignals: primaryDisease.emergencySignals,
-      preventionMeasures: primaryDisease.preventionMeasures.slice(0, 3),
-      locationContext: location,
-      prevalentInRegion: location ? primaryDisease.prevalentRegions.includes(location) : false,
-      riskFlags: riskFlags,
-      patientProfile: patientProfile
+      differentialDiagnoses,
+      treatmentGuidance: generateTreatmentGuidance(primaryDisease, patientProfile),
+      riskFlags,
+      locationContext: {
+        prevalentInRegion: location ? primaryDisease.prevalentRegions.includes(location) : false,
+        seasonalRisk: checkSeasonalRisk(primaryDisease),
+        outbreakRisk: checkOutbreakRisk(primaryDisease, location)
+      },
+      clinicalReasoning,
+      redFlags
     };
   },
 
   submitFeedback: (feedback: Omit<DiagnosisFeedback, 'id' | 'timestamp'>) => {
-    // In real implementation, this would update the ML model
     const newFeedback: DiagnosisFeedback = {
       ...feedback,
       id: Date.now().toString(),
@@ -402,7 +442,6 @@ export const enhancedDiagnosisEngine = {
   },
 
   getRegionalLearnings: (location: string) => {
-    // Analyze feedback patterns for a specific region
     const regionFeedback = diagnosisFeedback.filter(f => f.location === location);
     const commonCorrections = regionFeedback
       .filter(f => !f.isCorrect)
@@ -415,7 +454,7 @@ export const enhancedDiagnosisEngine = {
     
     return {
       totalFeedback: regionFeedback.length,
-      accuracyRate: regionFeedback.filter(f => f.isCorrect).length / regionFeedback.length,
+      accuracyRate: regionFeedback.length > 0 ? regionFeedback.filter(f => f.isCorrect).length / regionFeedback.length : 0,
       commonCorrections: Object.entries(commonCorrections)
         .sort(([,a], [,b]) => b - a)
         .slice(0, 3)
@@ -424,7 +463,128 @@ export const enhancedDiagnosisEngine = {
   }
 };
 
-const generateRiskFlags = (symptoms: string[], profile: PatientProfile, location?: string): RiskFlag[] => {
+// Helper functions
+function createFallbackDiagnosis(symptoms: string[], profile: PatientProfile, location?: string): EnhancedAnalysisResult {
+  return {
+    primaryDiagnosis: 'Comprehensive clinical assessment needed',
+    confidence: 40,
+    triageLevel: 'medium',
+    differentialDiagnoses: [
+      {
+        name: 'Viral syndrome',
+        confidence: 60,
+        reasoning: 'Common viral illness with non-specific symptoms',
+        urgency: 'routine',
+        nextSteps: ['Symptomatic treatment', 'Monitor for deterioration', 'Return if symptoms worsen']
+      },
+      {
+        name: 'Bacterial infection',
+        confidence: 40,
+        reasoning: 'Possible bacterial cause requiring investigation',
+        urgency: 'urgent',
+        nextSteps: ['Consider antibiotics', 'Laboratory tests if available', 'Follow up in 24-48 hours']
+      }
+    ],
+    treatmentGuidance: {
+      immediate: ['Symptomatic relief', 'Maintain hydration', 'Monitor vital signs'],
+      followUp: ['Return if symptoms persist >3 days', 'Seek immediate care if deteriorating'],
+      referralNeeded: false
+    },
+    riskFlags: generateRiskFlags(symptoms, profile, location),
+    locationContext: {
+      prevalentInRegion: false,
+      seasonalRisk: false,
+      outbreakRisk: false
+    },
+    clinicalReasoning: 'Symptoms do not clearly match common regional disease patterns. Requires further clinical assessment and possibly laboratory investigation.',
+    redFlags: []
+  };
+}
+
+function determineUrgency(disease: Disease, symptoms: string[]): 'immediate' | 'urgent' | 'routine' | 'self-care' {
+  if (disease.triageLevel === 'emergency') return 'immediate';
+  if (disease.triageLevel === 'high') return 'urgent';
+  
+  const emergencySymptoms = symptoms.filter(s => 
+    disease.emergencySignals.some(signal => s.includes(signal) || signal.includes(s))
+  );
+  
+  if (emergencySymptoms.length > 0) return 'immediate';
+  if (disease.triageLevel === 'medium') return 'urgent';
+  return 'routine';
+}
+
+function generateNextSteps(disease: Disease, profile: PatientProfile): string[] {
+  const steps = [];
+  
+  if (disease.triageLevel === 'emergency' || disease.triageLevel === 'high') {
+    steps.push('Immediate referral to health facility');
+  }
+  
+  steps.push(...disease.treatmentGuidelines.slice(0, 2));
+  
+  if (profile.age < 5) {
+    steps.push('Monitor closely for deterioration');
+  }
+  
+  return steps;
+}
+
+function generateTreatmentGuidance(disease: Disease, profile: PatientProfile) {
+  return {
+    immediate: disease.treatmentGuidelines.slice(0, 2),
+    followUp: disease.preventionMeasures.slice(0, 2),
+    referralNeeded: disease.triageLevel === 'high' || disease.triageLevel === 'emergency',
+    referralUrgency: disease.triageLevel === 'emergency' ? 'immediate' as const : 'within_24h' as const
+  };
+}
+
+function generateClinicalReasoning(symptoms: string[], profile: PatientProfile, disease: Disease, location?: string): string {
+  let reasoning = `Patient presents with ${symptoms.join(', ')}. `;
+  reasoning += `Given the ${profile.age}-year-old ${profile.gender} patient profile `;
+  
+  if (location) {
+    reasoning += `in ${location}, where ${disease.name} is ${disease.prevalentRegions.includes(location) ? 'prevalent' : 'less common'}, `;
+  }
+  
+  reasoning += `the constellation of symptoms most likely suggests ${disease.name}. `;
+  reasoning += `This diagnosis is supported by the regional epidemiology and symptom pattern. `;
+  reasoning += `Confidence level reflects the specificity of symptoms and local disease prevalence.`;
+  
+  return reasoning;
+}
+
+function identifyRedFlags(symptoms: string[], disease: Disease): string[] {
+  const redFlags = [];
+  
+  symptoms.forEach(symptom => {
+    if (disease.emergencySignals.some(signal => symptom.includes(signal) || signal.includes(symptom))) {
+      redFlags.push(`${symptom} - requires immediate attention`);
+    }
+  });
+  
+  return redFlags;
+}
+
+function checkSeasonalRisk(disease: Disease): boolean {
+  if (!disease.seasonality) return false;
+  
+  const currentMonth = new Date().getMonth();
+  const isRainySeason = currentMonth >= 2 && currentMonth <= 4 || currentMonth >= 9 && currentMonth <= 11;
+  
+  return disease.seasonality.includes('rainy') && isRainySeason;
+}
+
+function checkOutbreakRisk(disease: Disease, location?: string): boolean {
+  if (!location) return false;
+  
+  return currentOutbreaks.some(outbreak => 
+    outbreak.location === location && 
+    outbreak.disease.toLowerCase().includes(disease.name.toLowerCase())
+  );
+}
+
+function generateRiskFlags(symptoms: string[], profile: PatientProfile, location?: string): RiskFlag[] {
   const flags: RiskFlag[] = [];
   
   // Dehydration risk
@@ -468,6 +628,4 @@ const generateRiskFlags = (symptoms: string[], profile: PatientProfile, location
   }
   
   return flags;
-};
-
-export { kenyanDiseases, mockSymptomPatterns, currentOutbreaks, diagnosisEngine };
+}
