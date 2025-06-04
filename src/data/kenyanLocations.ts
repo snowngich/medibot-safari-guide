@@ -1,4 +1,3 @@
-
 export interface County {
   id: string;
   name: string;
@@ -22,6 +21,7 @@ export interface HealthFacility {
   waitTime: string;
   distance?: string;
   travelTime?: string;
+  estimatedTime?: string;
 }
 
 export const kenyanCounties: County[] = [
@@ -120,7 +120,8 @@ export const healthFacilities: HealthFacility[] = [
     phone: '+254 54 21234',
     coordinates: { lat: 3.1167, lng: 35.5833 },
     capacity: 'Medium',
-    waitTime: '45-60 mins'
+    waitTime: '45-60 mins',
+    estimatedTime: '45-60 mins'
   },
   {
     id: 'turkana-2',
@@ -133,7 +134,8 @@ export const healthFacilities: HealthFacility[] = [
     phone: '+254 54 22345',
     coordinates: { lat: 3.7500, lng: 34.7500 },
     capacity: 'Low',
-    waitTime: '30-45 mins'
+    waitTime: '30-45 mins',
+    estimatedTime: '30-45 mins'
   },
   
   // Mandera County
@@ -148,7 +150,8 @@ export const healthFacilities: HealthFacility[] = [
     phone: '+254 46 52123',
     coordinates: { lat: 3.9366, lng: 41.8570 },
     capacity: 'Medium',
-    waitTime: '60-90 mins'
+    waitTime: '60-90 mins',
+    estimatedTime: '60-90 mins'
   },
   
   // Marsabit County
@@ -163,7 +166,8 @@ export const healthFacilities: HealthFacility[] = [
     phone: '+254 69 52234',
     coordinates: { lat: 2.3284, lng: 37.9899 },
     capacity: 'Low',
-    waitTime: '45-60 mins'
+    waitTime: '45-60 mins',
+    estimatedTime: '45-60 mins'
   },
   
   // Tana River County
@@ -178,7 +182,8 @@ export const healthFacilities: HealthFacility[] = [
     phone: '+254 46 21567',
     coordinates: { lat: -1.5000, lng: 40.0000 },
     capacity: 'Medium',
-    waitTime: '30-45 mins'
+    waitTime: '30-45 mins',
+    estimatedTime: '30-45 mins'
   },
   
   // Kitui County
@@ -193,7 +198,8 @@ export const healthFacilities: HealthFacility[] = [
     phone: '+254 44 22890',
     coordinates: { lat: -1.3667, lng: 38.0167 },
     capacity: 'High',
-    waitTime: '30-45 mins'
+    waitTime: '30-45 mins',
+    estimatedTime: '30-45 mins'
   },
   {
     id: 'kitui-2',
@@ -206,7 +212,8 @@ export const healthFacilities: HealthFacility[] = [
     phone: '+254 44 23456',
     coordinates: { lat: -0.9356, lng: 38.0589 },
     capacity: 'Medium',
-    waitTime: '45-60 mins'
+    waitTime: '45-60 mins',
+    estimatedTime: '45-60 mins'
   },
   
   // Wajir County
@@ -221,7 +228,8 @@ export const healthFacilities: HealthFacility[] = [
     phone: '+254 46 21234',
     coordinates: { lat: 1.7471, lng: 40.0573 },
     capacity: 'Medium',
-    waitTime: '60-75 mins'
+    waitTime: '60-75 mins',
+    estimatedTime: '60-75 mins'
   },
   
   // Isiolo County
@@ -236,7 +244,8 @@ export const healthFacilities: HealthFacility[] = [
     phone: '+254 64 52345',
     coordinates: { lat: 0.3556, lng: 37.5833 },
     capacity: 'Medium',
-    waitTime: '45-60 mins'
+    waitTime: '45-60 mins',
+    estimatedTime: '45-60 mins'
   },
   
   // Baringo County
@@ -251,7 +260,8 @@ export const healthFacilities: HealthFacility[] = [
     phone: '+254 53 21678',
     coordinates: { lat: 0.4917, lng: 35.7417 },
     capacity: 'Medium',
-    waitTime: '30-45 mins'
+    waitTime: '30-45 mins',
+    estimatedTime: '30-45 mins'
   },
   
   // Samburu County
@@ -266,7 +276,8 @@ export const healthFacilities: HealthFacility[] = [
     phone: '+254 65 62345',
     coordinates: { lat: 1.0917, lng: 36.6983 },
     capacity: 'Low',
-    waitTime: '45-60 mins'
+    waitTime: '45-60 mins',
+    estimatedTime: '45-60 mins'
   },
   
   // Kilifi County
@@ -281,7 +292,8 @@ export const healthFacilities: HealthFacility[] = [
     phone: '+254 41 22567',
     coordinates: { lat: -3.5105, lng: 39.8499 },
     capacity: 'High',
-    waitTime: '30-45 mins'
+    waitTime: '30-45 mins',
+    estimatedTime: '30-45 mins'
   },
   {
     id: 'kilifi-2',
@@ -294,7 +306,8 @@ export const healthFacilities: HealthFacility[] = [
     phone: '+254 42 31234',
     coordinates: { lat: -3.2194, lng: 40.1169 },
     capacity: 'Medium',
-    waitTime: '45-60 mins'
+    waitTime: '45-60 mins',
+    estimatedTime: '45-60 mins'
   }
 ];
 
